@@ -93,7 +93,6 @@
 }
 
 
-
 .modal {
     display: none;
     position: fixed;
@@ -696,8 +695,6 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='125'%3E%3Cg transform='rotate(-41 70 62.5)'%3E%3Ctext x='70' y='22' text-anchor='middle' font-family='Arial' font-size='16' fill='%23000' fill-opacity='0.75'%3Ec0a8bea4%3C/text%3E%3Ctext x='22' y='62.5' text-anchor='middle' font-family='Arial' font-size='16' fill='%23000' fill-opacity='0.75'%3Ec0a8bea4%3C/text%3E%3Ctext x='118' y='62.5' text-anchor='middle' font-family='Arial' font-size='16' fill='%23000' fill-opacity='0.75'%3Ec0a8bea4%3C/text%3E%3Ctext x='70' y='105' text-anchor='middle' font-family='Arial' font-size='16' fill='%23000' fill-opacity='0.75'%3Ec0a8bea4%3C/text%3E%3C/g%3E%3C/svg%3E");
 }
 
-
-
     </style>
 </head>
 <body>
@@ -711,7 +708,6 @@ body {
         </div>
     </div>
     <div id="leaflet-control-layers"></div>
-    </div>
     <div id="map"></div>
  <div class="custom-menu">
    <div class="menu-row">
@@ -746,6 +742,7 @@ body {
     />
   </div>
 </div>
+
 <div class="menu-row">
   <div style="width: 130px;"></div>
   <div class="custom-button green">
@@ -898,22 +895,13 @@ body {
         const map = L.map('map', {
             zoomControl: false,
                         zoomSnap: 0.01,
- zoomDelta: 0.01,
+    zoomDelta: 0.01,
       wheelPxPerZoomLevel: 80
-        }).setView([48.3794, 31.1656], 7);
+        }).setView([48.3794, 31.1656], 6);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
         }).addTo(map);
-        
-              const watermark = L.DomUtil.create(
-        "div",
-        "leaflet-watermark",
-        map.getContainer()
-      );
-
-      L.DomEvent.disableClickPropagation(watermark);
-      L.DomEvent.disableScrollPropagation(watermark);
         
         
 // Обычный OSM (без фильтра)
@@ -1012,8 +1000,24 @@ const baseLayers = {
 // Добавляем контрол для переключения карт
 L.control.layers(baseLayers).addTo(map);
 
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+        
+              const watermark = L.DomUtil.create(
+        "div",
+        "leaflet-watermark",
+        map.getContainer()
+      );
+
+      L.DomEvent.disableClickPropagation(watermark);
+      L.DomEvent.disableScrollPropagation(watermark);
+        
+        
+
         let currentObjectId = 8900;
         let deleteMode = false;
+        let routeMode = false;
         const markers = [];
 
         function calculateCourse(lat1, lng1, lat2, lng2) {
@@ -1135,16 +1139,14 @@ L.control.layers(baseLayers).addTo(map);
                 modalBackground.style.display = 'none';
             }
         }
+map.on('click', (e) => {
+    if (deleteMode) return;
+    if (routeMode) return; // ⛔ маршрутный режим
 
-        map.on('click', (e) => {
-            if (deleteMode) return;
+    const { lat, lng } = e.latlng;
 
-            const { lat, lng } = e.latlng;
-
-            // Get speed input via modal
-            showSpeedModal((speed) => {
-                // Get target input via modal
-                showTargetModal((targetLat, targetLng) => {
+    showSpeedModal((speed) => {
+        showTargetModal((targetLat, targetLng) => {
 
             const objectId = generateId();
             let iconUrl;
@@ -1178,14 +1180,17 @@ L.control.layers(baseLayers).addTo(map);
     // Условия для выбора иконки в зависимости от скорости
     if (speed >= 120 && speed <= 121) {
         iconUrl = 'supercam.png';
-    } else if (speed > 120 && speed <= 200) {
-        iconUrl = 'shahed.png';
+} else if (speed > 120 && speed <= 200) {
+
+    // случай иконки — создаём случай 1 раз
+    const random = Math.random();
+    iconUrl = random < 0.3 ? 'neyst tip.png' : 'shahed.png';
     } else if (speed >= 7559 && speed < 7560) {
         iconUrl = 'iskander.png';
-    } else if (speed >= 950 && speed <= 951) {
-        iconUrl = 'kalibr.png';
-        iconClass = 'kr';
-        shiftedClass = 'shifted-info-container';
+} else if (speed >= 950 && speed <= 951) {
+    iconUrl = 'kalibr.png';
+    iconClass = 'kr';
+    shiftedClass = 'shifted-info-container';
     } else if (speed >= 1000 && speed <= 1001) {
         iconUrl = 'x101.png';
         iconClass = 'kr';
@@ -1196,6 +1201,7 @@ L.control.layers(baseLayers).addTo(map);
         shiftedClass = 'shifted-info-container';
         iconUrl = 'Tsirkon.png';
     } else if (speed >= 14687 && speed <= 14688) {
+        shiftedClass = 'shifted-info-container';
         iconUrl = 'Kinzhal.png';
     } else if (speed >= 4899 && speed <= 4900) {
         shiftedClass = 'shifted-info-container';
@@ -1237,6 +1243,7 @@ L.control.layers(baseLayers).addTo(map);
     } else if (speed >= 201 && speed <= 202) {
         iconUrl = 'beaver.png';
         iconClass = 'zl';
+        lineColor = '#006aff';  // Set blue line color for blue objects
     } else if (speed >= 329 && speed <= 330) {
         iconUrl = 'rys`.png';
         iconClass = 'zl';
@@ -1262,16 +1269,17 @@ L.control.layers(baseLayers).addTo(map);
     } else if (speed >= 1002 && speed <= 1003) {
         iconUrl = 'f-16.png';
         iconClass = 'blue-id';
-    } else if (speed >= 1200 && speed <= 1201) {
+    } else if (speed >= 800 && speed <= 801) {
         iconUrl = 'Su-34.png';
-    } else if (speed >= 1600 && speed <= 1601) {
+        iconClass = 'red-id su34-icon';
+    } else if (speed >= 815 && speed <= 816) {
         iconUrl = 'Su-57.png';
-    } else if (speed >= 1204 && speed <= 1205) {
+    } else if (speed >= 820 && speed <= 821) {
         iconUrl = 'Su-30.png';
     } else if (speed >= 1202 && speed <= 1203) {
         iconUrl = 'Su-30 BLR.png';
         iconClass = 'blue-id';  
-    } else if (speed >= 1400 && speed <= 1401) {
+    } else if (speed >= 840 && speed <= 840) {
         iconUrl = 'Su-35.png';
     } else if (speed >= 2300 && speed <= 2301) {
         iconUrl = 'Tu-22M3.png';
@@ -1292,7 +1300,7 @@ L.control.layers(baseLayers).addTo(map);
         shiftedClass = 'shifted-info-container';
     } else if (speed >= 500 && speed <= 501) {
         iconUrl = 'shahed 238.png';
-    } else if (speed >= 2400 && speed <= 2450) {
+    } else if (speed >= 920 && speed <= 921) {
         iconUrl = 'mig-31.png';
     } else if (speed >= 800 && speed <= 801) {
         iconUrl = 'a-50.png';
@@ -1302,6 +1310,12 @@ L.control.layers(baseLayers).addTo(map);
     } else if (speed >= 1110 && speed <= 1111) {
         iconUrl = 'mirage.png';
         iconClass = 'blue-id';  
+    } else if (speed >= 300 && speed <= 301) {
+        iconUrl = 'bplaper.png';
+            iconClass = 'perexop';  
+    } else if (speed >= 205 && speed <= 250) {
+        iconUrl = 'vertolet.png';
+        iconClass = 'vertolet';  
     } else {
         // Если скорость не попала ни в одно условие, ставим "neyst tip.png"
         iconUrl = 'neyst tip.png';
@@ -1312,8 +1326,8 @@ L.control.layers(baseLayers).addTo(map);
         <div class="icon-container ${iconClass}">
             <img src="${iconUrl}" class="icon" />
              <div class="info-container ${shiftedClass} ${shiftedClasss}">
-                <span class="label-container ${iconClass}">${objectId3}</span> 
-                <span class="r-container ${iconClass}">ЛБ</span>            
+                <span class="label-container ${iconClass}">${objectId3}р</span> 
+                <span class="r-container ${iconClass}">ЛБ·</span>            
             </div>
         </div>
     `;
@@ -1324,8 +1338,8 @@ L.control.layers(baseLayers).addTo(map);
         <div class="icon-container ${iconClass}">
             <img src="${iconUrl}" class="icon" />
              <div class="info-container ${shiftedClass} ${shiftedClasss}">
-                <span class="label-container ${iconClass}">${objectId}</span> 
-                <span class="r-container ${iconClass}">ПП</span>                
+                <span class="label-container ${iconClass}">${objectId}р</span> 
+                <span class="r-container ${iconClass}">ПП·</span>                
             </div>
         </div>
     `;
@@ -1336,8 +1350,8 @@ L.control.layers(baseLayers).addTo(map);
         <div class="icon-container ${iconClass}">
             <img src="${iconUrl}" class="icon" />
             <div class="info-container ${shiftedClass} ${shiftedClasss}">
-                <span class="label-container ${iconClass}">0${objectId2}</span>
-                <span class="r-container ${iconClass}">СВ</span>
+                <span class="label-container ${iconClass}">0${objectId2}р</span>
+                <span class="r-container ${iconClass}">СВ·</span>
             </div>
         </div>
     `;
@@ -1348,8 +1362,8 @@ L.control.layers(baseLayers).addTo(map);
         <div class="icon-container ${iconClass}">
             <img src="${iconUrl}" class="icon" />
             <div class="info-container ${shiftedClass} ${shiftedClasss}">
-                <span class="label-container ${iconClass}">0${objectId2}</span>
-                <span class="r-container ${iconClass}">ЗЛ</span>
+                <span class="label-container ${iconClass}">0${objectId2}р</span>
+                <span class="r-container ${iconClass}">ЗЛ·</span>
             </div>
         </div>
     `;
@@ -1359,8 +1373,8 @@ L.control.layers(baseLayers).addTo(map);
         <div class="icon-container ${iconClass}">
             <img src="${iconUrl}" class="icon" />
              <div class="info-container ${shiftedClass} ${shiftedClasss}">
-                <span class="label-container ${iconClass}">${objectId}</span>
-                <span class="r-container ${iconClass}">ПП</span>  
+                <span class="label-container ${iconClass}">${objectId}р</span>
+                <span class="r-container ${iconClass}">ПП·</span>  
             </div>
         </div>
     `;
@@ -1949,7 +1963,6 @@ function calculateNewPosition(lat1, lon1, speedMps, deltaTime, lat2, lon2) {
         lon1 + (lon2 - lon1) * fraction
     ];
 }
-
 function openCoordsModal(callback) {
     const background = document.createElement('div');
     background.className = 'modal-background show';
@@ -2022,6 +2035,8 @@ function openCoordsModal(callback) {
         document.body.removeChild(background);
     };
 }
+
+
 // ==== Удаление маркера без удаления линии ====
 // ==== Клик по маркеру ====
 // ==== Клик по маркеру ====
@@ -2256,12 +2271,20 @@ function getNextObjectId3() {
 
         document.getElementById('zoom-in').onclick = () => map.zoomIn();
         document.getElementById('zoom-out').onclick = () => map.zoomOut();
-                  const img = document.getElementById('toggleLayersImg');
+          const img = document.getElementById('toggleLayersImg');
   const layers = document.querySelector('.leaflet-control-layers');
 
   img.addEventListener('click', () => {
     layers.classList.toggle('active');
   });
+let routeLine = null;
+let routeVisible = false;
+
+/* твои координаты, которые УЖЕ есть */
+let routeCoords = [
+  [fromLat, fromLng],
+  [toLat, toLng]
+];
 
     </script>
 </body>
